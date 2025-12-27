@@ -1,0 +1,5 @@
+{
+  "name": "WealthPulse - Investment Advisor Portal",
+  "description": "A comprehensive dashboard for fund managers and investment advisors to manage clients, monitor portfolios, and process transfer/rebalancing requests based on UML business flows.",
+  "requestFramePermissions": []
+}
