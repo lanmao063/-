@@ -1,4 +1,5 @@
 
+
 export enum RequestStatus {
   SUBMITTED = 'SUBMITTED',
   VALIDATING = 'VALIDATING',
@@ -17,6 +18,8 @@ export enum RequestType {
 export interface Customer {
   id: string;
   name: string;
+  // Added nameEn to fix compilation errors in components
+  nameEn: string;
   email: string;
   phone: string;
   riskPreference: 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';

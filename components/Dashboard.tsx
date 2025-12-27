@@ -9,7 +9,7 @@ import {
 import { LanguageContext } from '../App';
 
 const Dashboard: React.FC<{ onNavigate: (v: any) => void }> = ({ onNavigate }) => {
-  const { lang } = useContext(LanguageContext);
+  const { lang, t } = useContext(LanguageContext);
 
   const data = [
     { name: lang === 'zh' ? '1月' : 'Jan', value: 400 },
@@ -48,7 +48,7 @@ const Dashboard: React.FC<{ onNavigate: (v: any) => void }> = ({ onNavigate }) =
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            {lang === 'zh' ? '下午好，张经理' : 'Good Afternoon, Manager Zhang'}
+            {lang === 'zh' ? `下午好，${t('user_name')}` : `Good Afternoon, ${t('user_name')}`}
           </h1>
           <p className="text-slate-500 text-sm">
             {lang === 'zh' ? '这是您今日的资产管理实时数据与预警分析。' : 'Your daily investment oversight and AI-driven insights.'}
