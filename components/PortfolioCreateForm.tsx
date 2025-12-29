@@ -21,7 +21,7 @@ import {
   ChevronRight,
   Globe
 } from 'lucide-react';
-import { LanguageContext } from '../App';
+import { AppContext } from '../App';
 
 interface FundItem {
   code: string;
@@ -38,12 +38,13 @@ interface Props {
 }
 
 const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
-  const { lang, t } = useContext(LanguageContext);
+  const ctx = useContext(AppContext);
+  if (!ctx) return null;
+  const { lang, t } = ctx;
   const [step, setStep] = useState(1);
   const [marketView, setMarketView] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // 模拟数据状态
   const [ratios, setRatios] = useState<{name: string, value: number}[]>([]);
   const [factors, setFactors] = useState({ sharpe: 70, alpha: 60, vol: 40, size: 50 });
   const [selectedFunds, setSelectedFunds] = useState<FundItem[]>([]);
@@ -57,7 +58,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
         { name: lang === 'zh' ? '高成长科技股' : 'High Growth Tech', value: 50 },
         { name: lang === 'zh' ? '大宗商品/黄金' : 'Commodities/Gold', value: 20 },
         { name: lang === 'zh' ? '红利价值' : 'Dividend Value', value: 20 },
-        { name: lang === 'zh' ? '现金' : 'Cash', value: 10 },
+        { name: lang === 'zh' ? '现金储备' : 'Cash Reserves', value: 10 },
       ]);
       setIsAnalyzing(false);
       setStep(2);
@@ -70,7 +71,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
       setSelectedFunds([
         { code: '001594', name: lang === 'zh' ? '天弘中证电子ETF' : 'TH Electronic ETF', weight: 30, score: 92 },
         { code: '512480', name: lang === 'zh' ? '广发中证半导体ETF' : 'GF Semi ETF', weight: 20, score: 88 },
-        { code: '161005', name: lang === 'zh' ? '富国天惠成长' : 'FG Growth Fund', weight: 20, score: 95 },
+        { code: '161005', name: lang === 'zh' ? '富国天惠成长' : 'FG Growth Alpha', weight: 20, score: 95 },
         { code: '000011', name: lang === 'zh' ? '华夏红利混合' : 'HX Dividend Mix', weight: 20, score: 84 },
         { code: '000000', name: lang === 'zh' ? '货币储备' : 'Cash Reserve', weight: 10, score: 100 },
       ]);
@@ -99,7 +100,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
         status: 'PASS',
         text: lang === 'zh' 
           ? '该组合在近3年回溯中展现了良好的 Alpha 捕获能力，年化收益 18.2%，最大回撤控制在 12% 以内。符合该等级客户的风险承受能力。' 
-          : 'This portfolio showed strong Alpha capture in 3Y backtest (18.2% CAGR, 12% Max DD). Aligns with the client risk profile.'
+          : 'Strategy outperformed with strong Alpha (18.2% CAGR, 12% MaxDD). Well-aligned with target risk profile.'
       });
       setIsAnalyzing(false);
       setStep(4);
@@ -107,10 +108,9 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
   };
 
   const finalPublish = () => {
-    // 模拟构造一个新组合对象并回调
     const newPort = {
       id: 'NEW',
-      name: lang === 'zh' ? 'AI 洞察策略组合' : 'AI Insights Strategic',
+      name: lang === 'zh' ? 'AI 洞察策略组合' : 'AI Insight Portfolio',
       risk: t('risk_agg'),
       aum: 0,
       subs: 0,
@@ -130,7 +130,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
           }`}>
             {step > s ? <CheckCircle className="w-5 h-5" /> : s}
           </div>
-          <span className={`text-[10px] font-bold uppercase tracking-widest ${step === s ? 'text-blue-600' : 'text-slate-400'}`}>
+          <span className={`text-[10px] font-black uppercase tracking-widest ${step === s ? 'text-blue-600' : 'text-slate-400'}`}>
             {t(`ai_step_${s}`)}
           </span>
         </div>
@@ -146,16 +146,16 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
 
       <div className="flex-1 p-8 overflow-y-auto">
         {step === 1 && (
-          <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom duration-500">
-            <div className="text-center space-y-2">
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+          <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom duration-500 text-center">
+            <div className="space-y-4">
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
                 <Sparkles className="w-10 h-10" />
               </div>
               <h2 className="text-3xl font-black text-slate-900 leading-tight">
-                {lang === 'zh' ? '开启您的 AI 协同投研之旅' : 'Start AI Co-pilot Journey'}
+                {lang === 'zh' ? '开启您的 AI 协同投研之旅' : 'AI Co-pilot Research Terminal'}
               </h2>
               <p className="text-slate-500 font-medium">
-                {lang === 'zh' ? '只需输入您的主观直觉，我们将负责量化回测与标的匹配。' : 'Input your intuition, we handle backtesting and fund matching.'}
+                {lang === 'zh' ? '输入您的主观直觉，我们将负责量化回测与标的匹配。' : 'Describe your market view; we handle quantification and fund selection.'}
               </p>
             </div>
             <textarea 
@@ -167,7 +167,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
             <button 
               onClick={handleAIAnalyzeView}
               disabled={!marketView || isAnalyzing}
-              className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-800 transition-all disabled:opacity-50 shadow-xl shadow-slate-200"
+              className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-800 transition-all disabled:opacity-50 shadow-xl shadow-slate-200 uppercase tracking-widest"
             >
               {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
               {t('ai_btn_analyze')}
@@ -181,7 +181,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
               <div className="bg-blue-50/50 border border-blue-100 p-8 rounded-3xl">
                 <h3 className="flex items-center gap-2 text-blue-900 font-black text-sm mb-6 uppercase tracking-widest">
                   <Bot className="w-5 h-5" />
-                  {lang === 'zh' ? 'AI 策略建议配比' : 'AI Strategic Allocation'}
+                  {lang === 'zh' ? 'AI 策略建议配比' : 'AI Recommended Allocation'}
                 </h3>
                 <div className="space-y-5">
                   {ratios.map((r, i) => (
@@ -224,7 +224,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
               <button 
                 onClick={handleAIFundPick}
                 disabled={isAnalyzing}
-                className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100"
+                className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-purple-700 transition-all shadow-xl shadow-purple-100 uppercase tracking-widest"
               >
                 {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <TrendingUp className="w-5 h-5" />}
                 {t('ai_btn_pick')}
@@ -245,12 +245,12 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
                    <Globe className="w-12 h-12 text-blue-100" />
                 </div>
                </div>
-               <div className="mt-8 p-8 bg-slate-900 text-white rounded-3xl w-full shadow-2xl">
-                 <p className="text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest">{lang === 'zh' ? '智能引擎诊断' : 'AI Engine Diagnosis'}</p>
+               <div className="mt-8 p-8 bg-slate-900 text-white rounded-3xl w-full shadow-2xl border border-white/10">
+                 <p className="text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest">{lang === 'zh' ? '智能引擎诊断报告' : 'AI Diagnostic Report'}</p>
                  <p className="text-sm italic leading-relaxed text-slate-300 font-medium">
                    {lang === 'zh' 
-                    ? '根据经理观点，我们识别出“进攻性反弹”语义。系统调高了弹性资产权重，并锁定了相关多因子评分最高的 Top 5 基金池待选。'
-                    : 'Based on view "Offensive Rebound", we increased alpha-seeking weights and locked Top 5 candidates.'}
+                    ? '根据您的主观观点，系统识别出“进攻性反弹”语义。我们已自动调高弹性资产权重，并锁定了因子评分最高的标的池。'
+                    : 'System detected "Aggressive Rebound" sentiment. We have increased alpha-seeking weights and locked high-factor candidates.'}
                  </p>
                </div>
             </div>
@@ -260,10 +260,10 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
         {step === 3 && (
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{lang === 'zh' ? 'AI 拟定持仓明细' : 'AI Draft Holdings'}</h3>
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-600 rounded-xl border border-green-100 shadow-sm">
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{lang === 'zh' ? '拟定持仓明细' : 'Draft Portfolio Detail'}</h3>
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-600 rounded-xl border border-green-100">
                 <CheckCircle className="w-4 h-4" />
-                <span className="text-xs font-black uppercase tracking-widest">{lang === 'zh' ? '权重平衡 100%' : 'Balanced 100%'}</span>
+                <span className="text-xs font-black uppercase tracking-widest">{lang === 'zh' ? '权重已配平 100%' : 'Balanced 100%'}</span>
               </div>
             </div>
 
@@ -271,9 +271,9 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{lang === 'zh' ? '标的代码' : 'Code'}</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{lang === 'zh' ? '代码' : 'Code'}</th>
                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{lang === 'zh' ? '基金名称' : 'Fund Name'}</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">{lang === 'zh' ? '因子综合分' : 'AI Score'}</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">{lang === 'zh' ? 'AI 评分' : 'AI Score'}</th>
                     <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">{lang === 'zh' ? '拟分配权重' : 'Weight'}</th>
                     <th className="px-8 py-5 text-right"></th>
                   </tr>
@@ -317,16 +317,16 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
             <div className="flex justify-end gap-4">
               <button 
                 onClick={() => setStep(2)}
-                className="px-8 py-4 rounded-2xl border border-slate-200 text-slate-500 font-black text-sm hover:bg-slate-50 transition-all"
+                className="px-8 py-4 rounded-2xl border border-slate-200 text-slate-500 font-black text-sm hover:bg-slate-50 transition-all uppercase tracking-widest"
               >
-                {lang === 'zh' ? '返回修改因子' : 'Back to Factors'}
+                {lang === 'zh' ? '返回配置因子' : 'Back to Factors'}
               </button>
               <button 
                 onClick={handleRunBacktest}
-                className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-2xl flex items-center gap-3 hover:bg-slate-800 transition-all"
+                className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-2xl flex items-center gap-3 hover:bg-slate-800 transition-all uppercase tracking-widest"
               >
                 {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Activity className="w-5 h-5" />}
-                {t('ai_backtest_title')}
+                {t('ai_btn_backtest')}
               </button>
             </div>
           </div>
@@ -338,10 +338,10 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
                <div className="lg:col-span-2 space-y-6">
                   <div className="h-[400px] bg-slate-50 rounded-3xl p-8 border border-slate-100 shadow-inner">
                     <div className="flex items-center justify-between mb-8">
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em]">{t('ai_backtest_title')}</h4>
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em]">{lang === 'zh' ? '3年仿真回测结果' : '3Y Simulated Backtest'}</h4>
                       <div className="flex gap-6">
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Portfolio</span></div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-slate-300 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Benchmark</span></div>
+                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{lang === 'zh' ? '当前组合' : 'Portfolio'}</span></div>
+                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-slate-300 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{lang === 'zh' ? '业绩基准' : 'Benchmark'}</span></div>
                       </div>
                     </div>
                     <ResponsiveContainer width="100%" height="100%">
@@ -374,11 +374,11 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-white border border-slate-200 p-6 rounded-3xl text-center shadow-sm">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">年化收益 CAGR</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{lang === 'zh' ? '年化收益' : 'Annual Return'}</p>
                       <p className="text-2xl font-black text-blue-600">18.2%</p>
                     </div>
                     <div className="bg-white border border-slate-200 p-6 rounded-3xl text-center shadow-sm">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">夏普比率 Sharpe</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{lang === 'zh' ? '夏普比率' : 'Sharpe Ratio'}</p>
                       <p className="text-2xl font-black text-blue-600">2.41</p>
                     </div>
                   </div>
@@ -389,13 +389,13 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
                <div className="flex items-center gap-6">
                  <div className="p-4 bg-white/20 rounded-2xl shadow-inner"><CheckCircle className="w-10 h-10" /></div>
                  <div>
-                   <h4 className="text-xl font-black tracking-tight mb-1">{lang === 'zh' ? '方案上架发布就绪' : 'Portfolio Ready for Launch'}</h4>
+                   <h4 className="text-xl font-black tracking-tight mb-1">{lang === 'zh' ? '方案上架发布就绪' : 'Launch Ready'}</h4>
                    <p className="text-blue-100 text-sm font-medium">{t('ai_publish_ready')}</p>
                  </div>
                </div>
                <button 
                 onClick={finalPublish}
-                className="px-10 py-5 bg-white text-blue-600 font-black rounded-2xl hover:bg-blue-50 transition-all flex items-center gap-3 shadow-xl transform active:scale-95"
+                className="px-10 py-5 bg-white text-blue-600 font-black rounded-2xl hover:bg-blue-50 transition-all flex items-center gap-3 shadow-xl transform active:scale-95 uppercase tracking-widest"
                >
                  {t('btn_publish')}
                  <ChevronRight className="w-6 h-6" />
@@ -411,7 +411,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
             {lang === 'zh' ? '放弃当前设计' : 'Discard Design'}
           </button>
           <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] flex items-center gap-2">
-            <Bot className="w-3.5 h-3.5" /> WealthPulse AI Engine v3.1
+            <Bot className="w-3.5 h-3.5" /> WealthPulse Engine v3.1
           </div>
         </div>
       )}
