@@ -1,7 +1,7 @@
 
 import React, { useState, useContext, useMemo } from 'react';
 import { RequestStatus, RequestType, ReviewRequest } from '../types';
-import { Bot, Info, CheckCircle2, XCircle, Clock, Database, AlertTriangle, UserX, Cpu, Zap, ShieldCheck } from 'lucide-react';
+import { Bot, Info, CheckCircle2, XCircle, Clock, Database, AlertTriangle, UserX, Cpu, Zap, ShieldCheck, ArrowRight } from 'lucide-react';
 import { AppContext } from '../App';
 
 const RequestManagement: React.FC = () => {
@@ -9,7 +9,7 @@ const RequestManagement: React.FC = () => {
   const [viewMode, setViewMode] = useState<'ACTIVE' | 'HISTORY'>('ACTIVE');
   const ctx = useContext(AppContext);
   if (!ctx) return null;
-  const { lang, t, requests, setRequests } = ctx;
+  const { lang, t, requests, setRequests, setActiveView } = ctx;
 
   const displayedRequests = useMemo(() => {
     if (viewMode === 'ACTIVE') {
@@ -28,6 +28,12 @@ const RequestManagement: React.FC = () => {
       case RequestType.DRIFT_ALERT: return { label: '偏离度合规预警', color: 'text-purple-600', bg: 'bg-purple-50', icon: Database, isAI: true };
       default: return { label: '通用监控流水', color: 'text-slate-600', bg: 'bg-slate-50', icon: Info, isAI: false };
     }
+  };
+
+  const handleGoToReview = (portfolioName?: string) => {
+    // 模拟跳转并携带上下文
+    localStorage.setItem('auto_open_diagnose', portfolioName || '');
+    setActiveView('portfolios');
   };
 
   const handleProcess = (id: string, success: boolean) => {
@@ -107,11 +113,22 @@ const RequestManagement: React.FC = () => {
               </div>
 
               {viewMode === 'ACTIVE' ? (
-                <div className="pt-8 border-t border-slate-100 grid grid-cols-2 gap-4">
-                  <button onClick={() => handleProcess(selectedRequest.id, false)} className="py-4 rounded-2xl border border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">驳回修正</button>
-                  <button onClick={() => handleProcess(selectedRequest.id, true)} className="py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> 复核通过
-                  </button>
+                <div className="pt-8 border-t border-slate-100 space-y-4">
+                  {selectedRequest.type === RequestType.REBALANCING ? (
+                    <button 
+                      onClick={() => handleGoToReview(selectedRequest.portfolioName)}
+                      className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      前往复核 <ArrowRight className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button onClick={() => handleProcess(selectedRequest.id, false)} className="py-4 rounded-2xl border border-slate-200 text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">驳回修正</button>
+                      <button onClick={() => handleProcess(selectedRequest.id, true)} className="py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" /> 复核通过
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="pt-8 border-t border-slate-100 space-y-4">

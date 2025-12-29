@@ -120,7 +120,7 @@ const AccountDetails: React.FC = () => {
              <div className="flex items-center gap-8">
                <div className="w-20 h-20 bg-red-500 text-white rounded-3xl flex items-center justify-center shadow-xl animate-pulse"><PowerOff className="w-10 h-10" /></div>
                <div>
-                 <h4 className="text-2xl font-black text-red-900">{t('terminate_confirm')}</h4>
+                 <h4 className="text-2xl font-black text-red-900">提示</h4>
                  <p className="text-red-700 text-xs font-bold mt-2 max-w-lg leading-relaxed">{t('terminate_notice')}</p>
                </div>
              </div>

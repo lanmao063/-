@@ -39,6 +39,8 @@ interface AppContextType {
   addAgreement: (a: any) => void;
   requests: ReviewRequest[];
   setRequests: React.Dispatch<React.SetStateAction<ReviewRequest[]>>;
+  portfolios: any[];
+  setPortfolios: React.Dispatch<React.SetStateAction<any[]>>;
   t: (key: string) => string;
   setActiveView: (v: View) => void;
 }
@@ -72,11 +74,15 @@ const translations: any = {
     btn_terminate: '知悉并清算',
     btn_view_subs: '查看持有分布',
     btn_publish: '发布至策略广场',
-    
-    tab_allocation: '资产穿透',
-    tab_holders: '持有者分布',
-    tab_trend: '业绩基准',
+    btn_one_click_buy: '一键买入 (T日)',
+    btn_diagnose: '持仓诊断',
+    btn_rebalance_man: '手动调仓 (人工干预)',
 
+    // 偏离度相关
+    monitor_deviation: '持仓偏离度',
+    monitor_status: '监控状态',
+    monitor_last_scan: '末次扫描时间',
+    
     // AI 策略创建流程翻译
     ai_step_1: '宏观观点',
     ai_step_2: '因子配置',
@@ -126,6 +132,13 @@ const translations: any = {
     btn_terminate: 'Acknowledge',
     btn_view_subs: 'Holders',
     btn_publish: 'Publish to Hub',
+    btn_one_click_buy: 'One-Click Buy (T)',
+    btn_diagnose: 'Diagnose',
+    btn_rebalance_man: 'Manual Rebalance',
+
+    monitor_deviation: 'Current Deviation',
+    monitor_status: 'Monitor Status',
+    monitor_last_scan: 'Last Scan',
 
     // AI Creation Flow EN
     ai_step_1: 'Macro View',
@@ -163,18 +176,48 @@ const App: React.FC = () => {
     { id: 'AG-20240115-08', strategyName: '科技成长旗舰 A1', signDate: '2024-01-15', status: AgreementStatus.SIGNED, amount: 500000 },
   ]);
   
+  const [portfolios, setPortfolios] = useState<any[]>([
+    { 
+      id: 'P01', 
+      name: '科技成长旗舰 A1', 
+      risk: '进取型', 
+      aum: 4250000, 
+      deviation: 8.52,
+      assets: [{ name: '权益', value: 80 }, { name: '现金', value: 20 }],
+      funds: [
+        { name: '中欧电子', val: 35 },
+        { name: '华夏半导体', val: 25 },
+        { name: '富国成长', val: 20 },
+        { name: '现金储备', val: 20 }
+      ]
+    },
+    { 
+      id: 'P02', 
+      name: '稳健养老配置 B2', 
+      risk: '平衡型', 
+      aum: 8520000, 
+      deviation: 1.24,
+      assets: [{ name: '固收', value: 70 }, { name: '权益', value: 30 }],
+      funds: [
+        { name: '博时短债', val: 40 },
+        { name: '工银固收', val: 30 },
+        { name: '易方达红利', val: 20 },
+        { name: '现金余额', val: 10 }
+      ]
+    },
+  ]);
+
   const [requests, setRequests] = useState<ReviewRequest[]>([
     { id: 'AI-RB-001', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-A1', amount: 0, date: '2024-03-20', status: RequestStatus.AUDITING, portfolioName: '科技成长旗舰 A1', suitabilityPassed: true, description: 'Gemini AI 监测到 Nvidia 财报超预期，建议自动调增 3.5% 算力芯片权重，减持部分现金头寸。' },
     { id: 'AI-RB-002', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-B2', amount: 0, date: '2024-03-20', status: RequestStatus.AUDITING, portfolioName: '稳健养老配置 B2', suitabilityPassed: true, description: '美联储利率指引转向鹰派，模型建议增加 8% 的 1-3 年期短债久期。' },
     { id: 'AI-RB-003', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-C3', amount: 0, date: '2024-03-19', status: RequestStatus.AUDITING, portfolioName: '全利增强策略 C1', suitabilityPassed: true, description: '红利因子拥挤度已达阈值，建议减持 5% 的高息煤炭股，配置至防御性公用事业标的。' },
     { id: 'DRIFT-ACT-01', type: RequestType.DRIFT_ALERT, customerName: '模型引擎', customerId: 'SYS-A1', amount: 0, date: '2024-03-21', status: RequestStatus.AUDITING, portfolioName: '科技成长旗舰 A1', suitabilityPassed: true, description: '检测到持仓股票上涨导致权益比例偏离目标值 5.2%，建议执行自动配平还原比例。' },
     
-    // 历史档案：偏离度合规预警案例
+    // 历史档案
     { id: 'DRIFT-HIST-01', type: RequestType.DRIFT_ALERT, customerName: '模型引擎', customerId: 'SYS-B2', amount: 0, date: '2024-03-15', status: RequestStatus.SUCCESS, portfolioName: '稳健养老配置 B2', suitabilityPassed: true, description: '偏离度已通过 AI 自动配平归档：债券久期漂移修正完成。' },
     { id: 'DRIFT-HIST-02', type: RequestType.DRIFT_ALERT, customerName: '模型引擎', customerId: 'SYS-C1', amount: 0, date: '2024-03-10', status: RequestStatus.SUCCESS, portfolioName: '全利增强策略 C1', suitabilityPassed: true, description: '偏离度修正完成：现金头寸已自动补足。' },
     { id: 'DRIFT-HIST-03', type: RequestType.DRIFT_ALERT, customerName: '模型引擎', customerId: 'SYS-D4', amount: 0, date: '2024-03-05', status: RequestStatus.SUCCESS, portfolioName: '港股精选旗舰 A2', suitabilityPassed: true, description: '偏离度修正完成：自动调减超配行业权重。' },
     
-    // 历史档案：策略调仓复核驳回修正案例
     { id: 'REB-REJ-01', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-A1', amount: 0, date: '2024-03-12', status: RequestStatus.FAILED, portfolioName: '科技成长旗舰 A1', suitabilityPassed: true, description: '手动驳回：AI 建议增持标的处于停牌期，策略执行挂起，等待下一窗口。' },
     { id: 'REB-REJ-02', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-B2', amount: 0, date: '2024-03-08', status: RequestStatus.FAILED, portfolioName: '稳健养老配置 B2', suitabilityPassed: true, description: '手动驳回：当前宏观流动性偏紧，暂缓久期拉长策略。' },
     { id: 'REB-REJ-03', type: RequestType.REBALANCING, customerName: '模型引擎', customerId: 'SYS-E5', amount: 0, date: '2024-03-02', status: RequestStatus.FAILED, portfolioName: 'ESG 责任先锋 B1', suitabilityPassed: true, description: '手动驳回：拟调入标的 ESG 评分出现负面舆情，修正准入清单。' },
@@ -279,7 +322,7 @@ const App: React.FC = () => {
   ];
 
   return (
-    <AppContext.Provider value={{ lang, setLang, role, setRole, isLoggedIn, setIsLoggedIn, balance, setBalance, agreements, setAgreements, addAgreement, requests, setRequests, t, setActiveView }}>
+    <AppContext.Provider value={{ lang, setLang, role, setRole, isLoggedIn, setIsLoggedIn, balance, setBalance, agreements, setAgreements, addAgreement, requests, setRequests, portfolios, setPortfolios, t, setActiveView }}>
       <div className="flex h-screen bg-slate-50 overflow-hidden">
         <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0">
           <div className="p-6">
