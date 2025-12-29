@@ -1,6 +1,6 @@
 
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Compass, ShieldCheck, Target, ChevronRight, Users, Wallet, TrendingUp, Zap, Loader2, CheckCircle2, ShieldAlert, X, CreditCard, Lock, Smartphone } from 'lucide-react';
+import { Compass, ShieldCheck, Target, ChevronRight, Users, Wallet, TrendingUp, Zap, Loader2, CheckCircle2, ShieldAlert, X, CreditCard, Lock, Smartphone, FileText, PenTool } from 'lucide-react';
 import { AppContext } from '../App';
 import { RiskLevel } from '../types';
 import { AreaChart, Area, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -13,17 +13,17 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
   const { lang, t, setBalance, addAgreement } = ctx;
 
   const [buyingStrategy, setBuyingStrategy] = useState<any>(null);
-  const [buyStep, setBuyStep] = useState(0); // 0: input, 1: payment, 2: password, 3: processing, 4: success
+  const [buyStep, setBuyStep] = useState(0); // 0: input, 1: agreement, 2: payment, 3: password, 4: processing, 5: success
   const [buyAmount, setBuyAmount] = useState(100000);
   const [paymentMethod, setPaymentMethod] = useState('balance'); // balance, card, alipay, credit
   const [pin, setPin] = useState(['', '', '', '', '', '']);
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [processStatus, setProcessStatus] = useState('');
+  const [isAgreed, setIsAgreed] = useState(false);
 
   // 核心改动：进入支付密码环节时自动聚焦第一个输入框
   useEffect(() => {
-    if (buyStep === 2) {
-      // 延迟 100ms 确保 DOM 已渲染且动画开始执行
+    if (buyStep === 3) { // 顺延到第3步
       const timer = setTimeout(() => {
         pinRefs.current[0]?.focus();
       }, 100);
@@ -84,7 +84,7 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
   const isPinComplete = pin.every(digit => digit !== '');
 
   const handleExecuteTransaction = async () => {
-    setBuyStep(3);
+    setBuyStep(4);
     const stages = [
       { msg: '正在校验合规签署状态...', delay: 800 },
       { msg: '正在获取最新标的配比...', delay: 600 },
@@ -106,13 +106,14 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
       amount: buyAmount
     };
     addAgreement(newAg);
-    setBuyStep(4);
+    setBuyStep(5);
   };
 
   const closeBuyModal = () => {
     setBuyingStrategy(null);
     setBuyStep(0);
     setPin(['', '', '', '', '', '']);
+    setIsAgreed(false);
   };
 
   return (
@@ -236,6 +237,50 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
 
                {buyStep === 1 && (
                  <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                    <div className="text-center mb-6">
+                      <h4 className="text-lg font-black text-slate-800">签署投顾服务协议</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Contract Signing</p>
+                    </div>
+                    
+                    <div className="h-64 bg-slate-50 rounded-2xl border border-slate-100 p-6 overflow-y-auto relative scrollbar-hide">
+                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-200 pointer-events-none -rotate-12 opacity-30 select-none">
+                         <ShieldCheck className="w-48 h-48" />
+                       </div>
+                       <div className="relative text-[11px] leading-relaxed text-slate-600 space-y-4">
+                         <p className="font-black text-slate-900">甲方（投资者）：Sarah Chen</p>
+                         <p className="font-black text-slate-900">乙方（投顾方）：WealthPulse 数字化投研团队</p>
+                         <p>1. 本协议项下投顾服务涵盖您所选定的《{buyingStrategy.name}》策略组合及其底层资产配置。甲方已知悉组合内权益资产占比达 {buyingStrategy.composition.find((c:any) => c.name.includes('权益'))?.value}%。</p>
+                         <p>2. 投顾费计提方式：本组合采用 0.12% 固定服务费+业绩报酬分成模式。费用将在清算日从财富账户独立计提。</p>
+                         <p>3. 风险提示：过往业绩不代表未来表现。资产市场波动可能导致本金亏损，请确认您的风险承受能力为 {RiskLevel.R3} 或以上。</p>
+                         <p>4. 甲方确认：授权乙方在 T 日执行基于核心算法的原子化建仓操作。</p>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                      <input 
+                        type="checkbox" 
+                        checked={isAgreed} 
+                        onChange={(e) => setIsAgreed(e.target.checked)}
+                        className="w-5 h-5 accent-blue-600 rounded cursor-pointer" 
+                      />
+                      <p className="text-[10px] font-bold text-slate-600 leading-tight">我已阅读并完全理解上述协议内容，同意由 WealthPulse 执行智能建仓指令。</p>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <button onClick={() => setBuyStep(0)} className="flex-1 py-5 border border-slate-200 text-slate-400 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">返回修改</button>
+                      <button 
+                        onClick={() => setBuyStep(2)} 
+                        disabled={!isAgreed}
+                        className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 shadow-xl transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+                      >
+                        <PenTool className="w-4 h-4" /> 电子签署并继续
+                      </button>
+                    </div>
+                 </div>
+               )}
+
+               {buyStep === 2 && (
+                 <div className="space-y-6 animate-in slide-in-from-right duration-300">
                     <div className="text-center">
                       <h4 className="text-lg font-black text-slate-800">选择支付方式</h4>
                       <p className="text-xs text-slate-400 font-bold mt-1">支付金额：¥{buyAmount.toLocaleString()}</p>
@@ -264,13 +309,13 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
                       ))}
                     </div>
                     <div className="flex gap-4 pt-4">
-                      <button onClick={() => setBuyStep(0)} className="flex-1 py-5 border border-slate-200 text-slate-400 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">返回修改</button>
-                      <button onClick={() => setBuyStep(2)} className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 shadow-xl transition-all">确认支付方式</button>
+                      <button onClick={() => setBuyStep(1)} className="flex-1 py-5 border border-slate-200 text-slate-400 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">上一步</button>
+                      <button onClick={() => setBuyStep(3)} className="flex-[2] py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 shadow-xl transition-all">确认支付方式</button>
                     </div>
                  </div>
                )}
 
-               {buyStep === 2 && (
+               {buyStep === 3 && (
                  <div className="space-y-8 animate-in slide-in-from-right duration-300">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6"><Lock className="w-8 h-8" /></div>
@@ -302,12 +347,12 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
                       >
                         <ShieldCheck className="w-5 h-5" /> 确认授权买入
                       </button>
-                      <button onClick={() => setBuyStep(1)} className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">更换支付方式</button>
+                      <button onClick={() => setBuyStep(2)} className="w-full py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">更换支付方式</button>
                     </div>
                  </div>
                )}
 
-               {buyStep === 3 && (
+               {buyStep === 4 && (
                  <div className="py-12 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in duration-300">
                     <div className="relative">
                       <div className="w-24 h-24 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
@@ -320,11 +365,14 @@ const Marketplace: React.FC<{onStartSigning: (strat: any) => void}> = ({onStartS
                  </div>
                )}
 
-               {buyStep === 4 && (
+               {buyStep === 5 && (
                  <div className="py-8 text-center space-y-8 animate-in zoom-in duration-300">
                    <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner"><CheckCircle2 className="w-14 h-14" /></div>
                    <div>
                      <h4 className="text-3xl font-black text-slate-900 mb-2">支付并申购已受理</h4>
+                     <div className="flex items-center justify-center gap-2 text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4">
+                        <FileText className="w-3 h-3" /> 合规协议已存档 (DIGI-SIG-{Date.now().toString().slice(-6)})
+                     </div>
                      <p className="text-sm text-slate-500 font-medium px-10">主申购单 (ST-{Date.now()}) 已通过 {paymentMethod.toUpperCase()} 流水授权，成功拆分为 {buyingStrategy.composition.length} 个子基金申购单。</p>
                    </div>
                    <button onClick={closeBuyModal} className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-600 shadow-xl transition-all">查看我的账户</button>
