@@ -338,7 +338,7 @@ const PortfolioCreateForm: React.FC<Props> = ({ onCancel, onPublish }) => {
                <div className="lg:col-span-2 space-y-6">
                   <div className="h-[400px] bg-slate-50 rounded-3xl p-8 border border-slate-100 shadow-inner">
                     <div className="flex items-center justify-between mb-8">
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em]">{lang === 'zh' ? '3年仿真回测结果' : '3Y Simulated Backtest'}</h4>
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em]">{lang === 'zh' ? '3年历史数据回溯结果' : '3Y Historical Backtest'}</h4>
                       <div className="flex gap-6">
                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{lang === 'zh' ? '当前组合' : 'Portfolio'}</span></div>
                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-slate-300 rounded-full shadow-sm" /><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{lang === 'zh' ? '业绩基准' : 'Benchmark'}</span></div>

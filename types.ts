@@ -16,38 +16,32 @@ export enum RiskLevel {
 export enum AccountStatus {
   ISOLATED = '资产已隔离',
   PENDING = '隔离处理中',
+  LIQUIDATING = '清仓清算中',
   NORMAL = '未开启隔离'
 }
 
 export enum AgreementStatus {
   SIGNED = '已签署',
   PENDING = '待签署',
-  EXPIRED = '已过期'
+  TERMINATING = '申请解约中',
+  TERMINATED = '已解约'
 }
 
-export interface PortfolioStrategy {
-  code: string;
-  name: string;
-  riskLevel: RiskLevel;
-  minInvestment: number;
-  expectedReturn: string;
-  tags: string[];
-}
-
-export interface AdvisoryAgreement {
+export interface FeeTemplate {
   id: string;
-  signDate: string;
-  strategyName: string;
-  status: AgreementStatus;
-}
-
-export interface Holding {
   name: string;
-  value: number;
-  color: string;
+  type: 'MANAGEMENT' | 'PERFORMANCE' | 'CUSTODIAN';
+  rate: number;
 }
 
-// Added missing Customer interface for ClientList.tsx
+export interface Report {
+  id: string;
+  type: 'INVESTMENT' | 'DISCLOSURE';
+  date: string;
+  title: string;
+  content?: string;
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -60,18 +54,20 @@ export interface Customer {
   status: 'ACTIVE' | 'PENDING' | 'INACTIVE';
 }
 
-// Added missing enums and interfaces for RequestManagement.tsx
 export enum RequestStatus {
-  AUDITING = 'AUDITING',
-  VALIDATING = 'VALIDATING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED'
+  AUDITING = 'AUDITING',     // 待复核
+  VALIDATING = 'VALIDATING', // 自动验证中
+  SUCCESS = 'SUCCESS',       // 已完成/已归档
+  FAILED = 'FAILED'          // 已驳回/异常
 }
 
 export enum RequestType {
   TRANSFER_IN = 'TRANSFER_IN',
   TRANSFER_OUT = 'TRANSFER_OUT',
-  REBALANCING = 'REBALANCING'
+  REBALANCING = 'REBALANCING',
+  TERMINATION = 'TERMINATION', // 清算通知
+  KYC_EXPIRED = 'KYC_EXPIRED', // KYC 失效预警
+  DRIFT_ALERT = 'DRIFT_ALERT'  // 组合偏离度预警
 }
 
 export interface ReviewRequest {
@@ -84,4 +80,6 @@ export interface ReviewRequest {
   status: RequestStatus;
   portfolioName?: string;
   suitabilityPassed: boolean;
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  description?: string;
 }
