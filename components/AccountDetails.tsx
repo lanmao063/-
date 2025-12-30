@@ -1,15 +1,25 @@
 
 import React, { useContext, useState, useMemo } from 'react';
-import { Lock, FileText, Download, TrendingUp, ShieldCheck, PowerOff, RefreshCw, X, Info, ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { Lock, FileText, Download, TrendingUp, ShieldCheck, PowerOff, RefreshCw, X, Info, ArrowRightLeft, AlertTriangle, ChevronDown, ChevronUp, ChevronRight, History, PieChart as PieIcon, Activity } from 'lucide-react';
 import { AppContext } from '../App';
 import { RequestType, RequestStatus } from '../types';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+
+// 模拟历史趋势数据
+const generateAgreementTrend = () => {
+  return Array.from({ length: 7 }, (_, i) => ({
+    day: `D-${6-i}`,
+    val: 100 + Math.random() * 20 - 10
+  }));
+};
 
 const AccountDetails: React.FC = () => {
   const ctx = useContext(AppContext);
-  const { lang, t, agreements, setAgreements, balance, setBalance, setRequests } = ctx!;
+  const { lang, t, agreements, setAgreements, balance, setBalance, setRequests, portfolios } = ctx!;
   
   const [terminatingId, setTerminatingId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const totalPortfolioValue = useMemo(() => {
     return agreements.reduce((sum, ag) => sum + (ag.amount || 0), 0);
@@ -19,34 +29,30 @@ const AccountDetails: React.FC = () => {
     return balance - totalPortfolioValue;
   }, [balance, totalPortfolioValue]);
 
-  const handleInitiateTermination = (id: string) => {
+  const handleInitiateTermination = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setTerminatingId(id);
   };
 
   const handleConfirmTermination = () => {
     if (!terminatingId) return;
-    
     setIsProcessing(true);
     
-    // 模拟清仓结转流程
     setTimeout(() => {
       const target = agreements.find(ag => ag.id === terminatingId);
       if (target) {
         const performanceFee = target.amount * 0.001; 
-        
-        // 核心改动：投资者端立即结转资产 (不经过经理审核)
         setBalance(prev => prev - performanceFee);
         setAgreements(agreements.filter(ag => ag.id !== terminatingId));
 
-        // 核心改动：自动产生一条“清算通知”发送至经理侧的合规监控中心
         const newRequest = {
           id: `TERM-${new Date().getTime()}`,
           type: RequestType.TERMINATION,
-          customerName: 'Sarah Chen', // 模拟当前登录名
+          customerName: 'Sarah Chen',
           customerId: 'WA-0856',
           amount: target.amount,
           date: new Date().toISOString().split('T')[0],
-          status: RequestStatus.SUCCESS, // 设置为 SUCCESS 表示已结转/已归档
+          status: RequestStatus.SUCCESS,
           portfolioName: target.strategyName,
           suitabilityPassed: true
         };
@@ -57,7 +63,7 @@ const AccountDetails: React.FC = () => {
         
         const refundAmount = target.amount - performanceFee;
         alert(lang === 'zh' 
-          ? `解约清算成功！资金已即时回笼。\n\n已归还现金：¥${target.amount.toLocaleString()}\n结算计提费用：-¥${performanceFee.toFixed(2)}\n最终到账金额：¥${refundAmount.toLocaleString()}\n\n* 合规流水已同步至经理端监控中心。` 
+          ? `解约清算成功！资金已即时回笼。\n\n已归还现金：¥${target.amount.toLocaleString()}\n结算计提费用：-¥${performanceFee.toFixed(2)}\n最终到账金额：¥${refundAmount.toLocaleString()}` 
           : `Termination Settled! Funds recouped.\n\nRecouped: ¥${target.amount.toLocaleString()}\nFee: -¥${performanceFee.toFixed(2)}\nNet Received: ¥${refundAmount.toLocaleString()}`);
       } else {
         setIsProcessing(false);
@@ -145,21 +151,118 @@ const AccountDetails: React.FC = () => {
           <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest"><Lock className="w-4 h-4" /> ACCOUNT: WA-0856</div>
         </div>
         <div className="divide-y divide-slate-50">
-           {agreements.length > 0 ? agreements.map((ag: any) => (
-             <div key={ag.id} className="p-10 hover:bg-slate-50/50 transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-8">
-                   <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-3xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner"><TrendingUp className="w-8 h-8" /></div>
-                   <div><p className="text-lg font-black text-slate-800 mb-1">{ag.strategyName}</p><p className="text-[11px] font-mono text-slate-400 tracking-tight uppercase">{ag.id} • {ag.signDate}</p></div>
-                </div>
-                <div className="flex items-center gap-8">
-                   <div className="text-right"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">{lang === 'zh' ? '估值' : 'Value'}</p><p className="text-xl font-black text-slate-800">¥{ag.amount?.toLocaleString()}</p></div>
-                   <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                     <button title={t('btn_terminate')} onClick={() => handleInitiateTermination(ag.id)} className="w-12 h-12 bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><PowerOff className="w-5 h-5" /></button>
-                     <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm cursor-pointer hover:bg-blue-600 hover:text-white transition-all"><Download className="w-5 h-5" /></div>
+           {agreements.length > 0 ? agreements.map((ag: any) => {
+             const isExpanded = expandedId === ag.id;
+             const pInfo = portfolios.find(p => p.name === ag.strategyName);
+             const trendData = useMemo(() => generateAgreementTrend(), [ag.id]);
+
+             return (
+               <div key={ag.id} className="transition-all hover:bg-slate-50/30">
+                 <div 
+                   onClick={() => setExpandedId(isExpanded ? null : ag.id)}
+                   className="p-10 flex items-center justify-between cursor-pointer group"
+                 >
+                    <div className="flex items-center gap-8">
+                       <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all shadow-inner ${isExpanded ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}>
+                         <TrendingUp className="w-8 h-8" />
+                       </div>
+                       <div>
+                         <p className="text-lg font-black text-slate-800 mb-1 flex items-center gap-2">
+                           {ag.strategyName}
+                           <span className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100 uppercase tracking-tighter">
+                             {pInfo?.risk || 'R3'}
+                           </span>
+                         </p>
+                         <p className="text-[11px] font-mono text-slate-400 tracking-tight uppercase">{ag.id} • 签署于 {ag.signDate}</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-8">
+                       <div className="text-right">
+                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">{lang === 'zh' ? '当前估值' : 'Value'}</p>
+                         <p className="text-xl font-black text-slate-800">¥{ag.amount?.toLocaleString()}</p>
+                       </div>
+                       <div className="flex gap-3">
+                         <button 
+                            onClick={(e) => handleInitiateTermination(ag.id, e)} 
+                            className="w-12 h-12 bg-red-50 text-red-500 border border-red-100 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                         >
+                           <PowerOff className="w-5 h-5" />
+                         </button>
+                         <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm transition-all hover:border-blue-400">
+                           {isExpanded ? <ChevronUp className="w-5 h-5 text-blue-600" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                         </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {isExpanded && (
+                   <div className="px-10 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-top-4 duration-300">
+                      {/* 趋势图 */}
+                      <div className="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 flex flex-col h-48">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                          <Activity className="w-3.5 h-3.5" /> 7日净值趋势
+                        </p>
+                        <div className="flex-1">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={trendData}>
+                              <defs>
+                                <linearGradient id={`grad-${ag.id}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <Area type="monotone" dataKey="val" stroke="#3b82f6" strokeWidth={2} fill={`url(#grad-${ag.id})`} />
+                              <Tooltip hideCursor />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* 资产明细 */}
+                      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                          <PieIcon className="w-3.5 h-3.5" /> 资产配置分布
+                        </p>
+                        <div className="space-y-3 overflow-y-auto pr-2 scrollbar-hide">
+                          {pInfo?.funds?.map((f: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-600 truncate mr-4">{f.name}</span>
+                              <span className="font-black text-slate-900">{f.val}%</span>
+                            </div>
+                          )) || <p className="text-[10px] text-slate-300">数据同步中...</p>}
+                        </div>
+                      </div>
+
+                      {/* 调仓履约记录 */}
+                      <div className="bg-slate-900 p-6 rounded-3xl text-white shadow-xl flex flex-col">
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                          <History className="w-3.5 h-3.5" /> 最近履约记录
+                        </p>
+                        <div className="space-y-4">
+                           <div className="flex gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                              <div>
+                                <p className="text-[11px] font-black">AI 智能配平完成</p>
+                                <p className="text-[9px] text-slate-500">2024-03-20 • 偏离度修正</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-3">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5" />
+                              <div>
+                                <p className="text-[11px] font-black">月度常规调仓</p>
+                                <p className="text-[9px] text-slate-500">2024-03-01 • 标的优选切换</p>
+                              </div>
+                           </div>
+                        </div>
+                        <button className="mt-auto pt-4 text-[10px] font-black text-blue-400 uppercase hover:text-white transition-colors text-left flex items-center gap-1">
+                          查看完整审计流水 <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
                    </div>
-                </div>
-             </div>
-           )) : <div className="p-24 text-center text-slate-400 font-black uppercase tracking-widest">目前无持仓组合，资金已回笼至现金。</div>}
+                 )}
+               </div>
+             );
+           }) : <div className="p-24 text-center text-slate-400 font-black uppercase tracking-widest">目前无持仓组合，资金已回笼至现金。</div>}
         </div>
       </div>
     </div>
